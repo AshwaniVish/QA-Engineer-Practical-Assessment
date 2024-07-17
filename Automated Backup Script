@@ -1,0 +1,67 @@
+import os
+import subprocess
+import paramiko
+import logging
+from datetime import datetime
+
+# Configure logging
+logging.basicConfig(filename='backup_report.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Backup configuration
+LOCAL_DIRECTORY = '/path/to/local/directory'  # Directory to backup
+REMOTE_DIRECTORY = '/path/to/remote/directory'  # Destination directory on remote server
+REMOTE_SERVER = 'remote.server.com'  # Remote server address
+REMOTE_USER = 'username'  # Remote server SSH username
+SSH_KEY_PATH = '/path/to/private/key'  # Path to SSH private key
+
+def run_rsync():
+    """Run rsync to backup the directory to the remote server."""
+    try:
+        # rsync command
+        rsync_command = [
+            'rsync', '-avz', '-e', f'ssh -i {SSH_KEY_PATH}',
+            LOCAL_DIRECTORY, f'{REMOTE_USER}@{REMOTE_SERVER}:{REMOTE_DIRECTORY}'
+        ]
+        result = subprocess.run(rsync_command, check=True, capture_output=True, text=True)
+        logging.info(result.stdout)
+        return True
+    except subprocess.CalledProcessError as e:
+        logging.error(e.stderr)
+        return False
+
+def check_remote_directory():
+    """Check if the remote directory exists and create if not."""
+    try:
+        # SSH client setup
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(REMOTE_SERVER, username=REMOTE_USER, key_filename=SSH_KEY_PATH)
+
+        # Check and create directory command
+        stdin, stdout, stderr = ssh.exec_command(f'mkdir -p {REMOTE_DIRECTORY}')
+        stdout.channel.recv_exit_status()
+        ssh.close()
+        return True
+    except Exception as e:
+        logging.error(f'Failed to check/create remote directory: {e}')
+        return False
+
+def main():
+    """Main function to perform the backup."""
+    logging.info('Starting backup process...')
+    
+    if check_remote_directory():
+        success = run_rsync()
+        if success:
+            logging.info('Backup completed successfully.')
+            print('Backup completed successfully.')
+        else:
+            logging.error('Backup failed.')
+            print('Backup failed.')
+    else:
+        logging.error('Failed to prepare remote directory.')
+        print('Failed to prepare remote directory.')
+
+if __name__ == '__main__':
+    main()
