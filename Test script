@@ -1,0 +1,26 @@
+import unittest
+import requests
+
+class TestFrontendBackendIntegration(unittest.TestCase):
+
+    def setUp(self):
+        # Set up the URLs for the frontend and backend services
+        self.frontend_url = "http://localhost:4000"
+        self.backend_url = "http://localhost:3000/greet"
+
+    def test_frontend_displays_backend_message(self):
+        # Get the expected message from the backend
+        backend_response = requests.get(self.backend_url)
+        self.assertEqual(backend_response.status_code, 200)
+        backend_message = backend_response.json().get('message')
+
+        # Get the message displayed on the frontend
+        frontend_response = requests.get(self.frontend_url)
+        self.assertEqual(frontend_response.status_code, 200)
+        frontend_message = frontend_response.text
+
+        # Check that the frontend displays the correct message
+        self.assertIn(backend_message, frontend_message, "Frontend does not display the correct backend message")
+
+if __name__ == '__main__':
+    unittest.main()
