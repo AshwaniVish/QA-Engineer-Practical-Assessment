@@ -1,0 +1,35 @@
+import requests
+import logging
+from datetime import datetime
+
+# Configure logging
+logging.basicConfig(filename='application_health.log', level=logging.INFO,
+                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Application URL and status code to consider as 'up'
+APPLICATION_URL = 'http://your-application-url.com/health'  # Replace with the actual URL
+UP_STATUS_CODES = [200]  # List of status codes considered as 'up'
+
+def check_application_health():
+    """Check the health of the application by sending an HTTP request."""
+    try:
+        response = requests.get(APPLICATION_URL, timeout=10)
+        status_code = response.status_code
+        if status_code in UP_STATUS_CODES:
+            logging.info(f'Application is UP with status code: {status_code}')
+            print(f'Application is UP with status code: {status_code}')
+        else:
+            logging.warning(f'Application is DOWN with status code: {status_code}')
+            print(f'Application is DOWN with status code: {status_code}')
+    except requests.exceptions.RequestException as e:
+        logging.error(f'Application is DOWN with error: {e}')
+        print(f'Application is DOWN with error: {e}')
+
+def main():
+    """Main function to perform the health check."""
+    logging.info('Starting application health check...')
+    check_application_health()
+    logging.info('Application health check completed.')
+
+if __name__ == '__main__':
+    main()
