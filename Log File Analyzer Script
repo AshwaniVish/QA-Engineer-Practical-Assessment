@@ -1,0 +1,51 @@
+import re
+from collections import defaultdict, Counter
+
+# Define the log file path
+LOG_FILE_PATH = 'access.log'  # Replace with the path to your log file
+
+# Regex pattern to parse log entries
+log_pattern = re.compile(
+    r'(?P<ip>\d+\.\d+\.\d+\.\d+) - - \[(?P<date>.+?)\] "(?P<method>\w+) (?P<url>\S+) \S+" (?P<status>\d+) (?P<size>\d+)'
+)
+
+# Counters for various statistics
+status_counter = Counter()
+page_counter = Counter()
+ip_counter = Counter()
+
+def analyze_log(file_path):
+    """Analyze the log file and extract statistics."""
+    with open(file_path, 'r') as file:
+        for line in file:
+            match = log_pattern.match(line)
+            if match:
+                ip = match.group('ip')
+                url = match.group('url')
+                status = match.group('status')
+
+                status_counter[status] += 1
+                page_counter[url] += 1
+                ip_counter[ip] += 1
+
+def print_report():
+    """Print a summarized report based on the analysis."""
+    print("Log Analysis Report")
+    print("===================")
+    print("\nNumber of 404 Errors:")
+    print(status_counter['404'])
+    
+    print("\nMost Requested Pages:")
+    for url, count in page_counter.most_common(5):
+        print(f"{url}: {count} requests")
+    
+    print("\nIP Addresses with the Most Requests:")
+    for ip, count in ip_counter.most_common(5):
+        print(f"{ip}: {count} requests")
+
+def main():
+    analyze_log(LOG_FILE_PATH)
+    print_report()
+
+if __name__ == '__main__':
+    main()
